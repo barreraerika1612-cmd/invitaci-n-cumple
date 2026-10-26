@@ -35,6 +35,39 @@ const Leaf = ({ className = '' }) => (
   </svg>
 )
 
+
+/* Efecto mágico: mariposas + estelas doradas */
+const FLIGHTS = [[-150, -320, -20], [140, -300, 15], [-60, -380, -8], [90, -360, 10], [0, -420, 0]]
+const trail = (dir) => {
+  const pts = Array.from({ length: 9 }, (_, i) => {
+    const t = i / 8, a = t * Math.PI * 1.6
+    return [dir * Math.sin(a) * 150 * (0.4 + t), -Math.cos(a) * 110 * (0.5 + t) + 60 - t * 200]
+  })
+  return { x: pts.map((q) => q[0]), y: pts.map((q) => q[1]) }
+}
+const TRAILS = [trail(1), trail(-1)]
+function Magic() {
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-[55%] z-20">
+      {FLIGHTS.map(([x, y, r], i) => (
+        <motion.div key={i} className="absolute -ml-5 -mt-5 w-10"
+          initial={{ x: 0, y: 0, opacity: 0, scale: 0.4 }}
+          animate={{ x: [0, x * 0.4, x], y: [0, y * 0.5, y], opacity: [0, 1, 1, 0], scale: [0.4, 1, 0.9], rotate: r }}
+          transition={{ duration: 1.8, delay: 0.1 + i * 0.08, ease: 'easeOut' }}>
+          <motion.img src={`${B}${i % 2 ? 'mariposa-lila' : 'mariposa-rosa'}.png`} alt="" className="w-full"
+            animate={{ scaleX: [1, 0.35, 1] }} transition={{ repeat: Infinity, duration: 0.28 }} />
+        </motion.div>
+      ))}
+      {TRAILS.map((t, k) => Array.from({ length: 20 }, (_, i) => (
+        <motion.span key={`${k}-${i}`} className="absolute rounded-full"
+          style={{ width: 9 - i * 0.4, height: 9 - i * 0.4, background: '#FBE7A1', boxShadow: '0 0 12px 4px #E9B949, 0 0 4px 1px #fff' }}
+          initial={{ opacity: 0 }} animate={{ x: t.x, y: t.y, opacity: [0, 1, 1, 0] }}
+          transition={{ duration: 1.4, delay: i * 0.035, ease: 'easeInOut' }} />
+      )))}
+    </div>
+  )
+}
+
 function Envelope({ onOpen }) {
   const [open, setOpen] = useState(false)
   const click = () => { if (!open) { setOpen(true); onOpen() } }
@@ -43,9 +76,9 @@ function Envelope({ onOpen }) {
       exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: EASE }}>
       <div className="relative aspect-[10/7] w-[84vw] max-w-sm" style={{ perspective: 1200 }}>
         {/* tarjeta: sale y hace zoom */}
-        <motion.div className="absolute inset-x-4 bottom-4 top-4 rounded-xl bg-cream shadow-lg" style={{ zIndex: open ? 5 : 1 }}
-          animate={open ? { y: ['0%', '-85%', '0%'], scale: [1, 1, 1.15], opacity: [1, 1, 0] } : {}}
-          transition={{ duration: 2.4, times: [0, 0.55, 1], ease: EASE, delay: 0.6 }}>
+        <motion.div className="absolute inset-x-4 bottom-4 top-4 rounded-xl bg-cream shadow-lg" style={{ zIndex: 2 }}
+          animate={open ? { y: ['0%', '-85%', '-85%', '0%'], scale: [1, 1, 1, 1.15], opacity: [1, 1, 1, 0], zIndex: [2, 2, 6, 6] } : {}}
+          transition={{ duration: 2.4, times: [0, 0.5, 0.52, 1], ease: EASE, delay: 1.4 }}>
           <img src={`${B}interior.png`} alt="" className="h-full w-full rounded-xl object-cover" />
         </motion.div>
         {/* cuerpo */}
@@ -58,6 +91,7 @@ function Envelope({ onOpen }) {
         <motion.div className="absolute inset-x-0 top-0 h-[58%] origin-top overflow-hidden rounded-t-2xl"
           style={{ zIndex: open ? 0 : 4, clipPath: 'polygon(0 0,100% 0,50% 100%)', background: 'linear-gradient(170deg,#F7E7E3 0%,#EBC9C0 100%)', filter: 'drop-shadow(0 6px 8px rgba(120,60,45,.3))' }}
           animate={open ? { rotateX: 180 } : {}} transition={{ duration: 1.3, ease: 'easeInOut' }} />
+        {open && <Magic />}
         {/* texto en la solapa */}
         <AnimatePresence>
           {!open && <motion.p exit={{ opacity: 0 }} className="absolute inset-x-0 top-[12%] z-10 text-center font-serif text-base italic tracking-wider text-[#8A5A4C]/80">Tenés una invitación</motion.p>}
@@ -178,7 +212,7 @@ export default function App() {
     a.play().then(() => {
       setPlaying(true)
       const start = performance.now()
-      const step = (t) => { const v = Math.min(1, (t - start) / 1500); a.volume = v; if (v < 1) requestAnimationFrame(step) }
+      const step = (t) => { const v = Math.min(1, (t - start) / 1500); a.volume = Math.max(0, v); if (v < 1) requestAnimationFrame(step) }
       requestAnimationFrame(step)
     }).catch(() => {})
   }
@@ -186,7 +220,7 @@ export default function App() {
     const a = audio.current
     if (a.paused) { a.play(); setPlaying(true) } else { a.pause(); setPlaying(false) }
   }
-  const open = () => { fadeIn(); setTimeout(() => { setStage('horizontal'); setTimeout(() => setStage('tarjeta'), 4000) }, 2700) }
+  const open = () => { fadeIn(); setTimeout(() => { setStage('horizontal'); setTimeout(() => setStage('tarjeta'), 4000) }, 3500) }
   const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WA_MSG)}`
 
   return (
