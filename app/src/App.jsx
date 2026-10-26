@@ -36,34 +36,108 @@ const Leaf = ({ className = '' }) => (
 )
 
 
-/* Efecto mágico: mariposas + estelas doradas */
-const FLIGHTS = [[-150, -320, -20], [140, -300, 15], [-60, -380, -8], [90, -360, 10], [0, -420, 0]]
-const trail = (dir) => {
-  const pts = Array.from({ length: 9 }, (_, i) => {
-    const t = i / 8, a = t * Math.PI * 1.6
-    return [dir * Math.sin(a) * 150 * (0.4 + t), -Math.cos(a) * 110 * (0.5 + t) + 60 - t * 200]
-  })
-  return { x: pts.map((q) => q[0]), y: pts.map((q) => q[1]) }
+/* ---------- Efecto mágico de apertura ---------- */
+// Canvas: dos estelas doradas en espiral que se entrelazan + chispas
+function SparkleCanvas() {
+  const ref = useRef(null)
+  useEffect(() => {
+    const c = ref.current, ctx = c.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1)
+    const W = innerWidth, H = innerHeight
+    c.width = W * dpr; c.height = H * dpr; ctx.scale(dpr, dpr)
+    const cx = W / 2, cy = H * 0.55, parts = [], t0 = performance.now()
+    let raf
+    const head = (t, dir) => {
+      const a = t * Math.PI * 2.6, r = 15 + t * Math.min(W, H) * 0.38
+      return [cx + dir * Math.sin(a) * r, cy - t * H * 0.5 + (1 - Math.cos(a)) * r * 0.35]
+    }
+    const loop = (now) => {
+      const t = (now - t0) / 1600
+      ctx.clearRect(0, 0, W, H)
+      ctx.globalCompositeOperation = 'source-over'
+      if (t < 1) for (const dir of [1, -1]) {
+        const [x, y] = head(t, dir)
+        for (let k = 0; k < 2; k++) parts.push({ x, y, vx: (Math.random() - .5) * 1.2, vy: (Math.random() - .5) * 1.2 + .3, life: 1, s: Math.random() * 1.8 + .4, tw: Math.random() * 6 })
+      }
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const q = parts[i]
+        q.x += q.vx; q.y += q.vy; q.vy += 0.01; q.life -= 0.016
+        if (q.life <= 0) { parts.splice(i, 1); continue }
+        const a = q.life * (0.6 + 0.4 * Math.sin(now / 60 + q.tw))
+        const g = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, q.s * 4)
+        g.addColorStop(0, `rgba(255,248,220,${a})`); g.addColorStop(0.3, `rgba(222,168,58,${a * 0.9})`); g.addColorStop(1, 'rgba(200,140,40,0)')
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q.x, q.y, q.s * 4, 0, 7); ctx.fill()
+        if (q.s > 2.3 && a > .5) { // destello en cruz
+          ctx.strokeStyle = `rgba(214,160,50,${a * .8})`; ctx.lineWidth = .8; ctx.beginPath()
+          ctx.moveTo(q.x - q.s * 4, q.y); ctx.lineTo(q.x + q.s * 4, q.y); ctx.moveTo(q.x, q.y - q.s * 4); ctx.lineTo(q.x, q.y + q.s * 4); ctx.stroke()
+        }
+      }
+      if (t < 1 || parts.length) raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+  return <canvas ref={ref} className="pointer-events-none fixed inset-0 z-50 h-full w-full" />
 }
-const TRAILS = [trail(1), trail(-1)]
+
+// Trayectorias curvas de las mariposas [x, y] en px desde el centro del sobre
+const FLIGHTS = [
+  [[0, 0], [-60, -80], [-30, -180], [-140, -260], [-190, -420]],
+  [[0, 0], [70, -60], [40, -170], [150, -240], [200, -400]],
+  [[0, 0], [-30, -90], [-110, -140], [-170, -110], [-230, -200]],
+  [[0, 0], [40, -100], [120, -130], [180, -90], [240, -180]],
+  [[0, 0], [-10, -120], [40, -220], [-20, -320], [30, -460]],
+  [[0, 0], [20, -70], [-60, -170], [60, -280], [-40, -440]],
+]
+function Butterfly({ path, i }) {
+  return (
+    <motion.div className="absolute -ml-7 -mt-7 w-14" style={{ perspective: 300 }}
+      initial={{ opacity: 0, scale: 0.3 }}
+      animate={{ x: path.map((p) => p[0]), y: path.map((p) => p[1]), opacity: [0, 1, 1, 0.9, 0], scale: [0.3, 0.9, 1, 1, 0.8], rotate: path.map((p, k) => (k ? Math.sign(p[0] - path[k - 1][0]) * 14 : 0)) }}
+      transition={{ duration: 2 + (i % 3) * 0.25, delay: 1.0 + i * 0.12, ease: 'easeInOut' }}>
+      <motion.img src={`${B}${i % 2 ? 'mariposa-lila' : 'mariposa-rosa'}.png`} alt="" className="w-full drop-shadow-[0_0_6px_rgba(240,200,120,.6)]"
+        animate={{ rotateY: [0, 65, 0] }} transition={{ repeat: Infinity, duration: 0.32 + (i % 3) * 0.05, ease: 'easeInOut' }} />
+    </motion.div>
+  )
+}
+
 function Magic() {
   return (
-    <div className="pointer-events-none absolute left-1/2 top-[55%] z-20">
-      {FLIGHTS.map(([x, y, r], i) => (
-        <motion.div key={i} className="absolute -ml-5 -mt-5 w-10"
-          initial={{ x: 0, y: 0, opacity: 0, scale: 0.4 }}
-          animate={{ x: [0, x * 0.4, x], y: [0, y * 0.5, y], opacity: [0, 1, 1, 0], scale: [0.4, 1, 0.9], rotate: r }}
-          transition={{ duration: 1.8, delay: 0.1 + i * 0.08, ease: 'easeOut' }}>
-          <motion.img src={`${B}${i % 2 ? 'mariposa-lila' : 'mariposa-rosa'}.png`} alt="" className="w-full"
-            animate={{ scaleX: [1, 0.35, 1] }} transition={{ repeat: Infinity, duration: 0.28 }} />
-        </motion.div>
+    <>
+      <div className="pointer-events-none absolute left-1/2 top-[45%] z-[60]">
+        {/* resplandor interno */}
+        <motion.div className="absolute -ml-40 -mt-40 h-80 w-80 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(255,236,180,.95) 0%, rgba(244,190,180,.55) 35%, rgba(255,220,200,0) 70%)', filter: 'blur(6px)' }}
+          initial={{ scale: 0.1, opacity: 0 }} animate={{ scale: [0.1, 1.4, 2.2], opacity: [0, 1, 0] }} transition={{ duration: 1.8, ease: 'easeOut' }} />
+        {/* niebla */}
+        {[[-90, -60], [80, -80], [-40, -140], [60, -20], [0, -100], [-120, 10], [120, 0]].map(([x, y], k) => (
+          <motion.div key={k} className="absolute -ml-16 -mt-16 h-32 w-32 rounded-full"
+            style={{ background: k % 2 ? 'rgba(255,255,255,.7)' : 'rgba(248,214,206,.7)', filter: 'blur(22px)' }}
+            initial={{ x: 0, y: 0, scale: 0.3, opacity: 0 }}
+            animate={{ x: x * 1.6, y: y * 1.6, scale: [0.3, 1.6, 2.4], opacity: [0, 0.85, 0] }}
+            transition={{ duration: 2.2, delay: 0.15 + k * 0.05, ease: 'easeOut' }} />
+        ))}
+        {FLIGHTS.map((p, i) => <Butterfly key={i} path={p} i={i} />)}
+      </div>
+    </>
+  )
+}
+
+/* Fondo ambiental: polvo dorado + mariposas casi imperceptibles */
+function Ambient() {
+  const dust = useRef(Array.from({ length: 18 }, () => ({ x: Math.random() * 100, d: 10 + Math.random() * 14, s: 2 + Math.random() * 3, dl: Math.random() * 10 }))).current
+  return (
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+      {dust.map((p, i) => (
+        <motion.span key={i} className="absolute rounded-full" style={{ left: `${p.x}%`, bottom: -10, width: p.s, height: p.s, background: '#F6DFA0', boxShadow: '0 0 6px 2px rgba(233,185,73,.5)' }}
+          animate={{ y: [0, -innerHeight - 40], x: [0, 20, -15, 10], opacity: [0, 0.7, 0.7, 0] }}
+          transition={{ duration: p.d, delay: p.dl, repeat: Infinity, ease: 'linear' }} />
       ))}
-      {TRAILS.map((t, k) => Array.from({ length: 20 }, (_, i) => (
-        <motion.span key={`${k}-${i}`} className="absolute rounded-full"
-          style={{ width: 9 - i * 0.4, height: 9 - i * 0.4, background: '#FBE7A1', boxShadow: '0 0 12px 4px #E9B949, 0 0 4px 1px #fff' }}
-          initial={{ opacity: 0 }} animate={{ x: t.x, y: t.y, opacity: [0, 1, 1, 0] }}
-          transition={{ duration: 1.4, delay: i * 0.035, ease: 'easeInOut' }} />
-      )))}
+      {[0, 1].map((i) => (
+        <motion.img key={i} src={`${B}${i ? 'mariposa-lila' : 'mariposa-rosa'}.png`} alt="" className="absolute w-7 opacity-40"
+          style={{ left: i ? '75%' : '10%', top: i ? '65%' : '30%' }}
+          animate={{ x: [0, 40, -20, 0], y: [0, -30, -60, 0], rotateY: [0, 50, 0, 50, 0] }}
+          transition={{ duration: 18 + i * 4, repeat: Infinity, ease: 'easeInOut' }} />
+      ))}
     </div>
   )
 }
@@ -74,11 +148,12 @@ function Envelope({ onOpen }) {
   return (
     <motion.div className="fixed inset-0 z-40 flex flex-col items-center justify-center overflow-hidden bg-cream" style={paper}
       exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: EASE }}>
+      {open && <SparkleCanvas />}
       <div className="relative aspect-[10/7] w-[84vw] max-w-sm" style={{ perspective: 1200 }}>
         {/* tarjeta: sale y hace zoom */}
         <motion.div className="absolute inset-x-4 bottom-4 top-4 rounded-xl bg-cream shadow-lg" style={{ zIndex: 2 }}
-          animate={open ? { y: ['0%', '-85%', '-85%', '0%'], scale: [1, 1, 1, 1.15], opacity: [1, 1, 1, 0], zIndex: [2, 2, 6, 6] } : {}}
-          transition={{ duration: 2.4, times: [0, 0.5, 0.52, 1], ease: EASE, delay: 1.4 }}>
+          animate={open ? { y: ['0%', '-85%', '-85%'], scale: [1, 1, 1.06], zIndex: [2, 2, 6] } : {}}
+          transition={{ duration: 1.2, times: [0, 0.65, 1], ease: EASE, delay: 1.8 }}>
           <img src={`${B}interior.png`} alt="" className="h-full w-full rounded-xl object-cover" />
         </motion.div>
         {/* cuerpo */}
@@ -220,25 +295,28 @@ export default function App() {
     const a = audio.current
     if (a.paused) { a.play(); setPlaying(true) } else { a.pause(); setPlaying(false) }
   }
-  const open = () => { fadeIn(); setTimeout(() => { setStage('horizontal'); setTimeout(() => setStage('tarjeta'), 4000) }, 3500) }
+  const open = () => { fadeIn(); setTimeout(() => { setStage('horizontal'); setTimeout(() => setStage('tarjeta'), 3200) }, 2900) }
   const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WA_MSG)}`
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-cream" style={paper}>
+      {stage === 'tarjeta' && <Ambient />}
       <audio ref={audio} src={`${B}musica.mp3`} loop preload="auto" />
       <AnimatePresence>{stage === 'sobre' && <Envelope onOpen={open} />}</AnimatePresence>
       <AnimatePresence>
         {stage === 'horizontal' && (
           <motion.div key="h" className="fixed inset-0 z-30 flex items-center justify-center p-3" style={paper}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7, ease: EASE }}>
-            <img src={`${B}interior.png`} alt="Invitación de Olivia" className="max-h-full max-w-full rounded-xl object-contain shadow-2xl" />
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 1.2, ease: 'easeInOut' } }} transition={{ duration: 0.6, ease: EASE }}>
+            <motion.img src={`${B}interior.png`} alt="Invitación de Olivia" className="max-h-full max-w-full rounded-xl object-contain"
+              initial={{ scale: 0.82, y: 40 }} animate={{ scale: 1, y: 0, boxShadow: ['0 0 0px rgba(240,200,120,0)', '0 0 60px 10px rgba(240,200,120,.55)', '0 0 30px 4px rgba(240,200,120,.35)'] }}
+              transition={{ duration: 1.4, ease: EASE }} />
           </motion.div>
         )}
       </AnimatePresence>
       {stage === 'tarjeta' && <Music playing={playing} toggle={toggle} />}
 
       {stage === 'tarjeta' && (
-        <motion.main initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: EASE }} className="pb-20 pt-16">
+        <motion.main initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: 'easeInOut' }} className="relative z-10 pb-20 pt-16">
           <header className="relative mx-auto w-[90%] max-w-md rounded-3xl border border-sage/30 bg-white/30 px-4 pb-10 pt-16 text-center shadow-[0_10px_30px_-14px_rgba(88,129,87,.3)] backdrop-blur-sm">
             <img src={`${B}mariposa-rosa.png`} alt="" className="absolute left-2 top-2 w-11 -rotate-12 opacity-90" />
             <img src={`${B}mariposa-lila.png`} alt="" className="absolute right-2 top-2 w-11 rotate-12 opacity-90" />
