@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const WHATSAPP_NUMBER = '549XXXXXXXXXX'
+const WHATSAPP_NUMBER = '543816772676'
 const WA_MSG = '¡Hola! Quiero confirmar mi asistencia para el Bautismo y Primer Añito de Olivia 🌸'
 const EVENT_DATE = new Date('2026-11-14T11:00:00-03:00')
 const B = import.meta.env.BASE_URL
@@ -41,7 +41,6 @@ function Envelope({ onOpen }) {
   return (
     <motion.div className="fixed inset-0 z-40 flex flex-col items-center justify-center overflow-hidden bg-cream" style={paper}
       exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: EASE }}>
-      <p className="mb-10 font-serif text-lg italic tracking-wide text-ink/70">Tenés una invitación</p>
       <div className="relative aspect-[10/7] w-[84vw] max-w-sm" style={{ perspective: 1200 }}>
         {/* tarjeta: sale y hace zoom */}
         <motion.div className="absolute inset-x-5 bottom-5 top-5 flex items-center justify-center rounded-xl bg-cream shadow-lg" style={{ ...paper, zIndex: open ? 5 : 1 }}
@@ -50,15 +49,17 @@ function Envelope({ onOpen }) {
           <span className="font-script text-4xl text-terra">Olivia</span>
         </motion.div>
         {/* cuerpo */}
-        <div className="absolute inset-0 overflow-hidden rounded-2xl shadow-2xl" style={{ zIndex: 3, background: '#F6EFE3' }}>
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top right,#EFE5D4 50%,transparent 50%) left/50% 100% no-repeat, linear-gradient(to top left,#EBE0CC 50%,transparent 50%) right/50% 100% no-repeat' }} />
-          <Leaf className="absolute -left-2 bottom-0 h-24 -rotate-12" />
-          <Leaf className="absolute -right-2 bottom-0 h-24 rotate-12" />
+        <div className="absolute inset-0 overflow-hidden rounded-2xl shadow-2xl" style={{ zIndex: 3, background: '#E6D2AF' }}>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top right,#DDC59D 50%,transparent 50%) left/50% 100% no-repeat, linear-gradient(to top left,#D8BE94 50%,transparent 50%) right/50% 100% no-repeat' }} />
         </div>
         {/* solapa */}
         <motion.div className="absolute inset-x-0 top-0 h-[58%] origin-top overflow-hidden rounded-t-2xl"
-          style={{ zIndex: open ? 0 : 4, clipPath: 'polygon(0 0,100% 0,50% 100%)', background: 'linear-gradient(#EADFCB,#E2D4BC)', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.15))' }}
+          style={{ zIndex: open ? 0 : 4, clipPath: 'polygon(0 0,100% 0,50% 100%)', background: 'linear-gradient(#D9BF94,#CBAE80)', filter: 'drop-shadow(0 6px 8px rgba(80,50,20,.3))' }}
           animate={open ? { rotateX: 180 } : {}} transition={{ duration: 1.3, ease: 'easeInOut' }} />
+        {/* texto en la solapa */}
+        <AnimatePresence>
+          {!open && <motion.p exit={{ opacity: 0 }} className="absolute inset-x-0 top-[12%] z-10 text-center font-serif text-base italic tracking-wider text-[#5C4426]/80">Tenés una invitación</motion.p>}
+        </AnimatePresence>
         {/* sello */}
         <AnimatePresence>
           {!open && (
@@ -88,7 +89,7 @@ function Envelope({ onOpen }) {
 const Section = ({ children, className = '' }) => (
   <motion.section initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.1 }}
     transition={{ duration: 0.8, ease: EASE }}
-    className={`relative mx-auto my-10 w-[90%] max-w-md rounded-3xl border border-sage/20 bg-white/60 px-6 py-10 text-center shadow-[0_10px_30px_-12px_rgba(88,129,87,.25)] backdrop-blur-md ${className}`}>
+    className={`relative mx-auto my-10 w-[90%] max-w-md rounded-3xl border border-sage/25 bg-white/60 px-6 py-10 text-center shadow-[0_10px_30px_-12px_rgba(88,129,87,.25)] backdrop-blur-sm ${className}`}>
     {children}
   </motion.section>
 )
@@ -139,7 +140,7 @@ function Calendar() {
   const cells = [...Array(first).fill(null), ...Array.from({ length: 30 }, (_, i) => i + 1)]
   return (
     <Section>
-      <h3 className="font-script text-5xl text-sage2">Save the Date</h3>
+      <h3 className="font-script text-5xl text-sage2">Reservá la fecha</h3>
       <p className="mt-2 font-sans text-xs font-semibold tracking-[.35em] text-ink/60">NOVIEMBRE 2026</p>
       <div className="mt-6 grid grid-cols-7 gap-1 font-sans text-sm">
         {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <div key={i} className="pb-2 text-xs font-semibold tracking-widest text-rose2">{d}</div>)}
@@ -183,18 +184,26 @@ export default function App() {
     const a = audio.current
     if (a.paused) { a.play(); setPlaying(true) } else { a.pause(); setPlaying(false) }
   }
-  const open = () => { fadeIn(); setTimeout(() => setStage('tarjeta'), 2700) }
+  const open = () => { fadeIn(); setTimeout(() => { setStage('horizontal'); setTimeout(() => setStage('tarjeta'), 2000) }, 2700) }
   const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WA_MSG)}`
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-cream" style={paper}>
       <audio ref={audio} src={`${B}musica.mp3`} loop preload="auto" />
       <AnimatePresence>{stage === 'sobre' && <Envelope onOpen={open} />}</AnimatePresence>
+      <AnimatePresence>
+        {stage === 'horizontal' && (
+          <motion.div key="h" className="fixed inset-0 z-30 flex items-center justify-center p-3" style={paper}
+            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.08 }} transition={{ duration: 0.7, ease: EASE }}>
+            <img src={`${B}interior.png`} alt="Invitación de Olivia" className="max-h-full max-w-full rounded-xl object-contain shadow-2xl" />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {stage === 'tarjeta' && <Music playing={playing} toggle={toggle} />}
 
       {stage === 'tarjeta' && (
-        <motion.main initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: EASE }} className="pb-20 pt-16">
-          <header className="relative mx-auto w-[90%] max-w-md px-2 py-8 text-center">
+        <motion.main initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: EASE }} className="pb-20 pt-16">
+          <header className="relative mx-auto w-[90%] max-w-md rounded-3xl border border-sage/30 bg-white/40 px-4 py-10 text-center shadow-[0_10px_30px_-14px_rgba(88,129,87,.3)] backdrop-blur-sm">
             <Leaf className="absolute -left-6 -top-6 h-32 -rotate-[30deg]" />
             <Leaf className="absolute -right-6 -top-6 h-32 rotate-[30deg]" />
             <p className="font-serif text-sm uppercase tracking-[.25em] text-ink/80">Acompáñanos a ser parte del</p>
@@ -218,9 +227,9 @@ export default function App() {
           </Section>
 
           <EventCard icon={I.church} title="MISA" place="Iglesia Catedral" name="Ntra. Sra. de la Merced" addr="Sarmiento 72 · B. Bca." time="11:00 hs."
-            map="https://www.google.com/maps/search/?api=1&query=Iglesia+Catedral+Ntra.+Sra.+de+la+Merced+Sarmiento+72+Bahia+Blanca" label="Ver ubicación de la Misa" />
+            map="https://www.google.com/maps/search/?api=1&query=-38.71641915651206,-62.26613550429844" label="Ver ubicación de la Misa" />
           <EventCard icon={I.party} title="FESTEJO" place="Quincho de Eventos" name="La Soñada" addr="Necochea 3986 · B. Bca." time="13:00 hs."
-            map="https://www.google.com/maps/search/?api=1&query=Quincho+de+Eventos+La+So%C3%B1ada+Necochea+3986+Bahia+Blanca" label="Ver ubicación del Festejo" />
+            map="https://www.google.com/maps/search/?api=1&query=-38.70716244995816,-62.20269887360896" label="Ver ubicación del Festejo" />
 
           <Countdown />
           <Calendar />
