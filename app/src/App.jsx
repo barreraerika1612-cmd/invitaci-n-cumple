@@ -43,22 +43,24 @@ function Envelope({ onOpen }) {
       exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: EASE }}>
       <div className="relative aspect-[10/7] w-[84vw] max-w-sm" style={{ perspective: 1200 }}>
         {/* tarjeta: sale y hace zoom */}
-        <motion.div className="absolute inset-x-5 bottom-5 top-5 flex items-center justify-center rounded-xl bg-cream shadow-lg" style={{ ...paper, zIndex: open ? 5 : 1 }}
-          animate={open ? { y: ['0%', '-80%', '-10%'], scale: [1, 1, 3], opacity: [1, 1, 0] } : {}}
+        <motion.div className="absolute inset-x-4 bottom-4 top-4 rounded-xl bg-cream shadow-lg" style={{ zIndex: open ? 5 : 1 }}
+          animate={open ? { y: ['0%', '-85%', '0%'], scale: [1, 1, 1.15], opacity: [1, 1, 0] } : {}}
           transition={{ duration: 2.4, times: [0, 0.55, 1], ease: EASE, delay: 0.6 }}>
-          <span className="font-script text-4xl text-terra">Olivia</span>
+          <img src={`${B}interior.png`} alt="" className="h-full w-full rounded-xl object-cover" />
         </motion.div>
         {/* cuerpo */}
-        <div className="absolute inset-0 overflow-hidden rounded-2xl shadow-2xl" style={{ zIndex: 3, background: '#E6D2AF' }}>
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top right,#DDC59D 50%,transparent 50%) left/50% 100% no-repeat, linear-gradient(to top left,#D8BE94 50%,transparent 50%) right/50% 100% no-repeat' }} />
+        <div className="absolute inset-0 overflow-hidden rounded-2xl shadow-2xl" style={{ zIndex: 3, background: '#F4E2DE', boxShadow: 'inset 0 0 0 1px rgba(160,90,70,.15), inset 0 -10px 24px rgba(160,90,70,.12)' }}>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top right,#EDD2CB 50%,transparent 50%) left/50% 100% no-repeat, linear-gradient(to top left,#E9CBC3 50%,transparent 50%) right/50% 100% no-repeat' }} />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-[#A05A46]/10" />
+          <div className="absolute inset-0 rounded-2xl" style={{ background: 'linear-gradient(135deg,rgba(255,255,255,.35),transparent 40%,rgba(120,60,45,.08))' }} />
         </div>
         {/* solapa */}
         <motion.div className="absolute inset-x-0 top-0 h-[58%] origin-top overflow-hidden rounded-t-2xl"
-          style={{ zIndex: open ? 0 : 4, clipPath: 'polygon(0 0,100% 0,50% 100%)', background: 'linear-gradient(#D9BF94,#CBAE80)', filter: 'drop-shadow(0 6px 8px rgba(80,50,20,.3))' }}
+          style={{ zIndex: open ? 0 : 4, clipPath: 'polygon(0 0,100% 0,50% 100%)', background: 'linear-gradient(170deg,#F7E7E3 0%,#EBC9C0 100%)', filter: 'drop-shadow(0 6px 8px rgba(120,60,45,.3))' }}
           animate={open ? { rotateX: 180 } : {}} transition={{ duration: 1.3, ease: 'easeInOut' }} />
         {/* texto en la solapa */}
         <AnimatePresence>
-          {!open && <motion.p exit={{ opacity: 0 }} className="absolute inset-x-0 top-[12%] z-10 text-center font-serif text-base italic tracking-wider text-[#5C4426]/80">Tenés una invitación</motion.p>}
+          {!open && <motion.p exit={{ opacity: 0 }} className="absolute inset-x-0 top-[12%] z-10 text-center font-serif text-base italic tracking-wider text-[#8A5A4C]/80">Tenés una invitación</motion.p>}
         </AnimatePresence>
         {/* sello */}
         <AnimatePresence>
@@ -89,7 +91,7 @@ function Envelope({ onOpen }) {
 const Section = ({ children, className = '' }) => (
   <motion.section initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.1 }}
     transition={{ duration: 0.8, ease: EASE }}
-    className={`relative mx-auto my-10 w-[90%] max-w-md rounded-3xl border border-sage/25 bg-white/60 px-6 py-10 text-center shadow-[0_10px_30px_-12px_rgba(88,129,87,.25)] backdrop-blur-sm ${className}`}>
+    className={`relative mx-auto my-10 w-[90%] max-w-md rounded-3xl border border-sage/25 bg-white/50 px-6 py-10 text-center shadow-[0_10px_30px_-12px_rgba(88,129,87,.25)] backdrop-blur-sm ${className}`}>
     {children}
   </motion.section>
 )
@@ -184,7 +186,7 @@ export default function App() {
     const a = audio.current
     if (a.paused) { a.play(); setPlaying(true) } else { a.pause(); setPlaying(false) }
   }
-  const open = () => { fadeIn(); setTimeout(() => { setStage('horizontal'); setTimeout(() => setStage('tarjeta'), 2000) }, 2700) }
+  const open = () => { fadeIn(); setTimeout(() => { setStage('horizontal'); setTimeout(() => setStage('tarjeta'), 4000) }, 2700) }
   const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WA_MSG)}`
 
   return (
@@ -194,7 +196,7 @@ export default function App() {
       <AnimatePresence>
         {stage === 'horizontal' && (
           <motion.div key="h" className="fixed inset-0 z-30 flex items-center justify-center p-3" style={paper}
-            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.08 }} transition={{ duration: 0.7, ease: EASE }}>
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7, ease: EASE }}>
             <img src={`${B}interior.png`} alt="Invitación de Olivia" className="max-h-full max-w-full rounded-xl object-contain shadow-2xl" />
           </motion.div>
         )}
@@ -203,9 +205,9 @@ export default function App() {
 
       {stage === 'tarjeta' && (
         <motion.main initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: EASE }} className="pb-20 pt-16">
-          <header className="relative mx-auto w-[90%] max-w-md rounded-3xl border border-sage/30 bg-white/40 px-4 py-10 text-center shadow-[0_10px_30px_-14px_rgba(88,129,87,.3)] backdrop-blur-sm">
-            <Leaf className="absolute -left-6 -top-6 h-32 -rotate-[30deg]" />
-            <Leaf className="absolute -right-6 -top-6 h-32 rotate-[30deg]" />
+          <header className="relative mx-auto w-[90%] max-w-md rounded-3xl border border-sage/30 bg-white/30 px-4 pb-10 pt-16 text-center shadow-[0_10px_30px_-14px_rgba(88,129,87,.3)] backdrop-blur-sm">
+            <img src={`${B}mariposa-rosa.png`} alt="" className="absolute left-2 top-2 w-11 -rotate-12 opacity-90" />
+            <img src={`${B}mariposa-lila.png`} alt="" className="absolute right-2 top-2 w-11 rotate-12 opacity-90" />
             <p className="font-serif text-sm uppercase tracking-[.25em] text-ink/80">Acompáñanos a ser parte del</p>
             <h1 className="mt-5 font-script text-5xl leading-[1.1] text-[#B08A55]">Bautismo <span className="text-3xl">y</span><br />Primer Añito</h1>
             <p className="mt-5 font-serif italic tracking-wide text-ink/80">de nuestra pequeña hija</p>
